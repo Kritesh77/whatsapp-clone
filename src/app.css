@@ -1,0 +1,21 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Roboto";
+}
+.message_time {
+  bottom: 2px;
+  right: 5px;
+}
+
+.chatbox_message_container {
+  width: fit-content;
+}
+
+.chat_right {
+  margin-left: auto;
+}
