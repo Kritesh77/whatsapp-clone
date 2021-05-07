@@ -60,6 +60,11 @@ export default function SignInSide() {
   }, []);
   const handleSignin = async (event) => {
     event.preventDefault();
+    await auth.signInWithEmailAndPassword(email, password).catch((error) => {
+      setPassword("");
+      //   setError(error.message);
+      console.log(error.message);
+    });
   };
 
   const googleLogin = async () => {
@@ -98,6 +103,9 @@ export default function SignInSide() {
           <Typography component="h1" variant="h5">
             Sign in
           </Typography>
+          <Typography component="h4" variant="h6">
+            {error && { error }}
+          </Typography>
           <form className={classes.form} onSubmit={handleSignin} method="post">
             <TextField
               variant="outlined"
@@ -135,12 +143,15 @@ export default function SignInSide() {
               Sign In
             </Button>
 
-            <Button onclick={googleLogin}>
+            <h1>
               Login with
-              <span className="font-bold text-red-600 cursor-pointer">
+              <span
+                onClick={googleLogin}
+                className="font-bold text-red-600 cursor-pointer"
+              >
                 Google
               </span>
-            </Button>
+            </h1>
           </form>
         </div>
       </Grid>
