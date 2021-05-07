@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { Link, useParams } from "react-router-dom";
+import UserContext from "../context/user";
 import { MoreVert, Search, Chat, AccountCircle } from "@material-ui/icons";
 import { IconButton, Avatar } from "@material-ui/core";
 import { db } from "../firebase";
-function SidebarContacts({ name, addNewChat }) {
+function SidebarContacts({ id, name, addNewChat }) {
   const [seed, setSeed] = useState("");
   useEffect(() => {
     setSeed(Math.floor(Math.random() * 5000));
-    console.log(seed);
   }, []);
   const createChat = () => {
     const newChat = prompt("Enter new chat name");
@@ -17,15 +18,17 @@ function SidebarContacts({ name, addNewChat }) {
     }
   };
   return !addNewChat ? (
-    <div className="mx-4 py-2 flex border-b-2 items-center">
-      <div className="">
-        <Avatar src={`https://avatars.dicebear.com/api/human/${seed}.svg`} />
+    <Link to={`/chats/${id}`}>
+      <div className="mx-4 py-2 flex border-b-2 items-center">
+        <div className="">
+          <Avatar src={`https://avatars.dicebear.com/api/human/${seed}.svg`} />
+        </div>
+        <div className="px-4">
+          <h1 className="font-bold inline-block text-lg ">{name}</h1>
+          <p className="text-gray-800">This is my chat message</p>
+        </div>
       </div>
-      <div className="px-4">
-        <h1 className="font-bold inline-block text-lg ">{name}</h1>
-        <p className="text-gray-800">This is my chat message</p>
-      </div>
-    </div>
+    </Link>
   ) : (
     <div className="mx-4 py-2 border-b-2" onClick={createChat}>
       <h1 className="font-bold inline-block text-2xl cursor-pointer ml-2 text-lg text-bold">
@@ -34,7 +37,9 @@ function SidebarContacts({ name, addNewChat }) {
     </div>
   );
 }
+
 function Sidebar() {
+  const { user } = useContext(UserContext);
   const [chats, setChats] = useState([]);
   useEffect(() => {
     const unsubscribe = db.collection("chatContacts").onSnapshot((snap) => {
@@ -44,27 +49,23 @@ function Sidebar() {
           data: doc.data(),
         }))
       );
+      // console.log(chats);
     });
     return () => {
       unsubscribe();
     };
   }, []);
-  const chatMap = chats.map((c) => {
-    return <SidebarContacts key={c.id} id={c.id} name={c.data.name} />;
-  });
-  console.log("map chat", chatMap);
 
   return (
-    <div className="flex flex-col w-1/3  ">
+    <div className="flex-col w-full flex sm:w-1/3">
       <div
-        className="flex w-full justify-between bg-gray-200 py-2"
+        className="flex w-full items-center justify-between bg-gray-200 py-2"
         id="sidebar_header"
       >
-        <div>
-          <IconButton>
-            <AccountCircle />
-          </IconButton>
+        <div className="h-10 w-10 rounded-full overflow-hidden ml-4">
+          <img src={user.photoURL} alt="" className="object-contain" />
         </div>
+
         <div>
           <IconButton>
             <Chat />
@@ -86,7 +87,9 @@ function Sidebar() {
       </div>
       <div className="w-full overflow-y-scroll " id="contact_container">
         <SidebarContacts addNewChat />
-        {chatMap}
+        {chats.map((c) => {
+          return <SidebarContacts key={c.id} id={c.id} name={c.data.name} />;
+        })}
       </div>
     </div>
   );

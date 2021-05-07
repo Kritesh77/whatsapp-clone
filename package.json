@@ -4,8 +4,6 @@
   "description": "This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).",
   "main": "tailwind.config.js",
   "dependencies": {
-    "@material-ui/core": "^4.11.3",
-    "@material-ui/icons": "^4.11.2",
     "autoprefixer": "^9.8.6",
     "firebase": "^8.4.2",
     "postcss": "^7.0.35",
@@ -15,21 +13,38 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "^4.0.3",
     "react-tailwind": "^0.0.0",
-    "tailwindcss": "^2.1.0",
+    "tailwindcss": "^2.1.2",
     "web-vitals": "^1.1.1"
   },
-  "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Kritesh77/insta-clone.git"
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
   },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Kritesh77/insta-clone/issues"
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   },
-  "homepage": "https://github.com/Kritesh77/insta-clone#readme"
+  "devDependencies": {
+    "@babel/core": "^7.13.15",
+    "@tailwindcss/postcss7-compat": "^2.1.0",
+    "autoprefixer": "^9.8.6",
+    "postcss": "^7.0.35",
+    "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.1.0"
+  }
 }

@@ -1,6 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import App from "./App";
+import { StateProvider } from "./components/StateProvider";
+
 ReactDOM.render(
   <React.StrictMode>
     <App />
