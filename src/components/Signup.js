@@ -52,22 +52,43 @@ export default function SignInSide() {
   console.log("history", history);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
   const [error, setError] = useState("");
-  const isInValid = password === "" || email === "";
-  // console.log("form is in valid ?", isInValid);
   useEffect(() => {
     document.title = "Login ";
   }, []);
-  const handleSignin = async (event) => {
+  const handleSignup = async (event) => {
     event.preventDefault();
-    await auth.signInWithEmailAndPassword(email, password).catch((error) => {
+    const doesUsernameExists = await usernameExists(email);
+    if (doesUsernameExists === 0) {
+      console.log("%c User addinn", "background: #222; color: red");
+
+      try {
+        const createdUserResult = await auth.createUserWithEmailAndPassword(
+          email,
+          password
+        );
+        await db.collection("users").add({
+          dateCreated: Date.now(),
+          email: email.toLowerCase(),
+          username: username.toLowerCase(),
+          userId: createdUserResult.user.uid,
+        });
+      } catch (err) {
+        setError(err.message);
+        setEmail("");
+      }
+    } else {
+      setUsername("");
+      setEmail("");
       setPassword("");
-      //   setError(error.message);
-      console.log(error.message);
-    });
+      setError("That username is already taken, please try another!");
+
+      console.log("%c User already existing", "background: #222; color: red");
+    }
   };
 
-  const googleLogin = async () => {
+  const googleSignup = async () => {
     console.log("GOOGE LOGIN");
     const createdUserResult = await auth.signInWithPopup(provider);
     console.log("USER created result", createdUserResult);
@@ -85,8 +106,13 @@ export default function SignInSide() {
           email: createdUserResult.user.email.toLowerCase(),
           dateCreated: Date.now(),
         })
-        .catch((error) => alert(error.message));
+        .catch((err) => {
+          setUsername("");
+          setError(err.message);
+          alert(error);
+        });
     } else {
+      setError(error.message);
       console.log("%c User already existing", "background: #222; color: red");
     }
   };
@@ -101,12 +127,25 @@ export default function SignInSide() {
             <LockOutlinedIcon />
           </Avatar>
           <Typography component="h1" variant="h5">
-            Sign in
+            Signup
           </Typography>
-          <Typography component="h4" variant="h6">
-            {error && { error }}
-          </Typography>
-          <form className={classes.form} onSubmit={handleSignin} method="post">
+          {error && (
+            <p className="text-xs mb-2 text-center text-red-500">{error}</p>
+          )}
+          <form className={classes.form} onSubmit={handleSignup} method="post">
+            <TextField
+              variant="outlined"
+              margin="normal"
+              required
+              fullWidth
+              id="username"
+              label="Username"
+              name="username"
+              autoComplete="username"
+              autoFocus
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
             <TextField
               variant="outlined"
               margin="normal"
@@ -140,18 +179,24 @@ export default function SignInSide() {
               color="primary"
               className={classes.submit}
             >
-              Sign In
+              Sign Up
             </Button>
-
-            <h1>
-              Login with
-              <span
-                onClick={googleLogin}
-                className="font-bold text-red-600 cursor-pointer"
-              >
-                Google
-              </span>
-            </h1>
+            <Grid container>
+              <Grid item xs>
+                {"Signup with "}
+                <span
+                  onClick={googleSignup}
+                  className="font-bold text-red-600 cursor-pointer"
+                >
+                  Google
+                </span>
+              </Grid>
+              <Grid item>
+                <Link to="/login" variant="body2">
+                  {"Already having an account? Login"}
+                </Link>
+              </Grid>
+            </Grid>
           </form>
         </div>
       </Grid>

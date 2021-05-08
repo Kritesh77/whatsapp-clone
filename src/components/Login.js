@@ -1,27 +1,79 @@
-import React, { useEffect, useState, useContext } from "react";
+import Avatar from "@material-ui/core/Avatar";
+import Button from "@material-ui/core/Button";
+import CssBaseline from "@material-ui/core/CssBaseline";
+import TextField from "@material-ui/core/TextField";
+import Paper from "@material-ui/core/Paper";
+import Grid from "@material-ui/core/Grid";
+import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
+import Typography from "@material-ui/core/Typography";
+import { makeStyles } from "@material-ui/core/styles";
+import React, { useEffect, useState } from "react";
 import { Link, useHistory } from "react-router-dom";
 import { auth, provider, db } from "../firebase";
+import usernameExists from "../hooks/does-username-exist";
+const useStyles = makeStyles((theme) => ({
+  root: {
+    height: "100vh",
+  },
+  image: {
+    backgroundImage: "url(https://source.unsplash.com/random)",
+    backgroundRepeat: "no-repeat",
+    backgroundColor:
+      theme.palette.type === "light"
+        ? theme.palette.grey[50]
+        : theme.palette.grey[900],
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+  },
+  paper: {
+    margin: theme.spacing(8, 4),
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+  },
+  avatar: {
+    margin: theme.spacing(1),
+    backgroundColor: theme.palette.secondary.main,
+  },
+  form: {
+    width: "100%", // Fix IE 11 issue.
+    marginTop: theme.spacing(1),
+  },
+  submit: {
+    margin: theme.spacing(3, 0, 2),
+  },
+}));
 
-import { useStateValue } from "./StateProvider.js";
-export default function Login() {
+export default function SignInSide() {
+  const classes = useStyles();
   const history = useHistory();
   console.log("history", history);
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const isInValid = password === "" || username === "";
+  const isInValid = password === "" || email === "";
   // console.log("form is in valid ?", isInValid);
   useEffect(() => {
     document.title = "Login ";
   }, []);
+  const handleLogin = async (event) => {
+    event.preventDefault();
+    await auth.signInWithEmailAndPassword(email, password).catch((error) => {
+      setPassword("");
+      //   setError(error.message);
+      console.log(error.message);
+    });
+  };
+
   const googleLogin = async () => {
+    console.log("GOOGE LOGIN");
     const createdUserResult = await auth.signInWithPopup(provider);
-    const checkUser = await db
-      .collection("users")
-      .where("email", "==", createdUserResult.user.email)
-      .get();
-    console.log(checkUser.docs.length);
-    if (checkUser.docs.length === 0) {
+    console.log("USER created result", createdUserResult);
+
+    const doesUsernameExists = await usernameExists(
+      createdUserResult.user.email
+    );
+    if (doesUsernameExists === 0) {
       console.log("%c Adding new user ", "background: #222; color: red");
       await db
         .collection("users")
@@ -38,56 +90,75 @@ export default function Login() {
   };
 
   return (
-    <div className="container flex mx-auto max-w-screen-md items-center h-screen">
-      <div className="flex w-3/5">
-        <img
-          src="https://www.sendible.com/hs-fs/hubfs/Imported_Blog_Media/ig-ads-7-article.png?width=800&height=800&name=ig-ads-7-article.png"
-          alt="iPhone with Instagram app"
-        />
-      </div>
-      <div className=" w-2/5 bg-white flex-col flex ">
-        <div className="flex w-full justify-center">
-          <img
-            className="mt-2 w-1/2 mb-4"
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Instagram_logo.svg/1024px-Instagram_logo.svg.png"
-            alt=""
-          />
+    <Grid container component="main" className={classes.root}>
+      <CssBaseline />
+      <Grid item xs={false} sm={4} md={7} className={classes.image} />
+      <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
+        <div className={classes.paper}>
+          <Avatar className={classes.avatar}>
+            <LockOutlinedIcon />
+          </Avatar>
+          <Typography component="h1" variant="h5">
+            Login
+          </Typography>
+          <Typography component="h4" variant="h6">
+            {error && { error }}
+          </Typography>
+          <form className={classes.form} onSubmit={handleLogin} method="post">
+            <TextField
+              variant="outlined"
+              margin="normal"
+              required
+              fullWidth
+              id="email"
+              label="Email Address"
+              name="email"
+              autoComplete="email"
+              autoFocus
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <TextField
+              variant="outlined"
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label="Password"
+              type="password"
+              id="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              color="primary"
+              className={classes.submit}
+            >
+              Login
+            </Button>
+            <Grid container>
+              <Grid item xs>
+                {"Login with "}
+                <span
+                  onClick={googleLogin}
+                  className="font-bold text-red-600 cursor-pointer"
+                >
+                  Google
+                </span>
+              </Grid>
+              <Grid item>
+                <Link to="/signup" variant="body2">
+                  {"Don't have an account? Sign Up"}
+                </Link>
+              </Grid>
+            </Grid>
+          </form>
         </div>
-        {error && (
-          <p className="text-xs mb-2 text-center text-red-500">{error}</p>
-        )}
-        <form method="post">
-          <input
-            type="text"
-            aria-label="Enter your email address"
-            name="username"
-            id="username"
-            placeholder="Username"
-            className="text-sm w-full mr-3 py-5 px-4 h-2 border rounded mb-2 "
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <input
-            type="password"
-            value={password}
-            name="password"
-            placeholder="Password"
-            id="password"
-            className="text-sm w-full mr-3 py-5 px-4 h-2 border rounded mb-2 "
-            onChange={({ target }) => setPassword(target.value)}
-          />
-          <input
-            type="submit"
-            value="Login"
-            className={`text-white font-bold  rounded w-full bg-blue-500 py-1 ${
-              isInValid && "cursor-not-allowed opacity-50"
-            }`}
-          />
-        </form>
-        <div className="border rounded bg-white mt-4 px-3 py-2 ">
-          <button onClick={signIn}>Signin with Google</button>
-        </div>
-      </div>
-    </div>
+      </Grid>
+    </Grid>
   );
 }

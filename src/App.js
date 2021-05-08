@@ -1,7 +1,8 @@
 import React, { useState, Suspense, useEffect } from "react";
 import Sidebar from "./components/Sidebar.js";
 import Chatroom from "./components/Chatroom";
-import Login2 from "./components/Login2";
+import Login from "./components/Login";
+import Signup from "./components/Signup";
 import "./app.css";
 import useAuthListener from "./hooks/on-auth-change.js";
 import UserContext from "./context/user.js";
@@ -26,7 +27,13 @@ export default function App() {
   return (
     <UserContext.Provider value={{ user }}>
       {!user ? (
-        <Login2 />
+        <Router>
+          <Switch>
+            <Route path="/" exact component={Login} />
+            <Route path="/login" component={Login} />
+            <Route path="/signup" component={Signup} />
+          </Switch>
+        </Router>
       ) : (
         <Router>
           <Suspense fallback={<p>Loading...</p>}>
