@@ -41,21 +41,23 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 });
 
 export default function FullScreenDialog() {
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
-  var myDocId, cc;
-  const [contacts, setContacts] = useState([]);
+  var confirmedContactsMap, pendingRequestsMap, awaitedRequestsMap;
+  const [pendingRequests, setpendingRequests] = useState([]);
+  const [awaitedRequests, setAwaitedRequests] = useState([]);
+  const [confirmedContacts, setConfirmedContacts] = useState([]);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const classes = useStyles();
   const [open, setOpen] = useState(false);
   const { user } = useContext(UserContext);
-  const [confirmedContacts, setConfirmedContacts] = useState([]);
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+  const handleClose = () => {
+    setOpen(false);
+  };
+
   const getMyDocId = async () => {
     const getMyDocId = await db
       .collection("users")
@@ -74,43 +76,131 @@ export default function FullScreenDialog() {
   };
   // getMyDocId();
   useEffect(() => {
+    setpendingRequests([]);
+    setConfirmedContacts([]);
+    setAwaitedRequests([]);
     console.log("use effect runnin ");
-    db.collection("users")
-      .doc(user.uid)
+    var contactSnapshot = db
+      .collection("chatRequests") //sent requests
+      .where("sender", "==", user.email);
+
+    var pendingSnapshot = db
       .collection("chatRequests")
-      .onSnapshot((snap) => {
-        setContacts(
-          snap.docs.map((doc) => {
-            console.log(doc.data().status);
-            if (doc.data().status === "pending") {
-              return {
-                id: doc.id,
-                status: doc.data().status,
-                timestamp: doc.data().timestamp,
-                photoURL: doc.data().photoURL,
-              };
-            }
-          })
-        );
-        setConfirmedContacts(
-          snap.docs.map((doc) => {
-            console.log(doc.data().status);
-            if (doc.data().status === "confirmed") {
-              return {
-                id: doc.id,
-                status: doc.data().status,
-                timestamp: doc.data().timestamp,
-                photoURL: doc.data().photoURL,
-              };
-            } else {
-              return null;
-            }
-          })
-        );
-        // snap.forEach((x) => console.log("SNAPX", x.data()));
+      .where("reciever", "==", user.email);
+
+    var confirmedSnapshot = db
+      .collection("chatRequests")
+      .where("status", "==", "confirmed");
+
+    confirmedSnapshot.onSnapshot((snap) => {
+      snap.docs.map((doc) => {
+        console.log(doc.data().status);
+        if (
+          doc.data().sender === user.email ||
+          doc.data().reciever === user.email
+        ) {
+          let newContact = {
+            id: doc.id,
+            reciever: doc.data().reciever,
+            sender: doc.data().sender,
+            status: doc.data().status,
+            timestamp: doc.data().timestamp,
+            photoURL: doc.data().photoURL,
+          };
+          console.log(
+            "%c  before",
+            "background: #222; color: red",
+            awaitedRequests
+          );
+          setConfirmedContacts((prevState) => [...prevState, newContact]);
+          console.log(
+            "%c  after",
+            "background: #222; color: red",
+            awaitedRequests
+          );
+        } else if (doc.data().status === "confirmed") {
+        }
       });
+    });
+    contactSnapshot.onSnapshot((snap) => {
+      snap.docs.map((doc) => {
+        console.log(doc.data().status);
+        if (doc.data().status === "pending") {
+          let newContact = {
+            id: doc.id,
+            reciever: doc.data().reciever,
+            status: doc.data().status,
+            timestamp: doc.data().timestamp,
+            photoURL: doc.data().photoURL,
+          };
+          console.log(
+            "%c  before",
+            "background: #222; color: red",
+            awaitedRequests
+          );
+          setAwaitedRequests((prevState) => [...prevState, newContact]);
+          console.log(
+            "%c  after",
+            "background: #222; color: red",
+            awaitedRequests
+          );
+        } else if (doc.data().status === "confirmed") {
+        }
+      });
+    });
+
+    pendingSnapshot.onSnapshot((snap) => {
+      snap.docs.map((doc) => {
+        console.log(doc.data().status);
+        if (doc.data().status === "pending") {
+          let newContact = {
+            id: doc.id,
+
+            sender: doc.data().sender,
+            status: doc.data().status,
+            timestamp: doc.data().timestamp,
+            photoURL: doc.data().photoURL,
+          };
+          console.log(
+            "%c  before",
+            "background: #222; color: red",
+            pendingRequests
+          );
+          setpendingRequests((prevState) => [...prevState, newContact]);
+          console.log(
+            "%c  after",
+            "background: #222; color: red",
+            pendingRequests
+          );
+        } else if (doc.data().status === "confirmed") {
+        }
+      });
+    });
   }, [db]);
-  console.log("CONTACTS", confirmedContacts);
+  // console.log(
+  //   "%c setPEnding request",
+  //   "background: #222; color: red",
+  //   pendingRequests
+  // );
+
+  const handleConfirmChat = async (docId) => {
+    console.log(docId);
+    await db
+      .collection("chatRequests")
+      .doc(docId)
+      .update({
+        status: "confirmed",
+      })
+      .then((x) => {
+        console.log("confirm success");
+      })
+      .catch((err) => {
+        console.error(err.message);
+      });
+  };
+  console.log("pendingRequests", pendingRequests);
+  // console.log("awaitedRequests", awaitedRequests);
+  // console.log("confirmedContacts", confirmedContacts);
   function ConfirmedContacts({ id, status, time, photoURL }) {
     return (
       <List>
@@ -124,20 +214,35 @@ export default function FullScreenDialog() {
       </List>
     );
   }
-  function PendingRequests({ id, status, time, photoURL }) {
+
+  function PendingRequests({ id, sender, status, time, photoURL }) {
     return (
       <List>
         <ListItem button>
           <div className="h-10 w-10 rounded-full overflow-hidden border mx-4">
             <img src={photoURL} alt="" className="object-contain" />
           </div>
-          <ListItemText primary={id} secondary={status} />
-          <IconButton>
+          <ListItemText primary={sender} secondary={status} />
+          <IconButton onClick={() => handleConfirmChat(id)}>
             <CheckRounded style={{ color: "green" }} />
           </IconButton>
           <IconButton aria-label="delete">
             <Delete color="secondary" />
           </IconButton>
+        </ListItem>
+        <Divider />
+      </List>
+    );
+  }
+
+  function AwaitedRequests({ id, reciever, status, time, photoURL }) {
+    return (
+      <List>
+        <ListItem button>
+          <div className="h-10 w-10 rounded-full overflow-hidden border mx-4">
+            <img src={photoURL} alt="" className="object-contain" />
+          </div>
+          <ListItemText primary={reciever} secondary={status} />
         </ListItem>
         <Divider />
       </List>
@@ -172,7 +277,7 @@ export default function FullScreenDialog() {
                 Contacts
               </Typography>
             </ListItem>
-            {confirmedContacts.map((m) => (
+            {confirmedContacts?.map((m) => (
               <ConfirmedContacts
                 id={m.id}
                 key={m.id}
@@ -183,21 +288,41 @@ export default function FullScreenDialog() {
             ))}
           </Grid>
           {/* //new contact list grid */}
-          <Grid item xs={12} sm={6}>
-            <ListItem style={{ margin: "1.2rem 0" }}>
-              <Typography variant="h4" className={classes.title}>
-                New chat request
-              </Typography>
-            </ListItem>
-            {contacts.map((m) => (
-              <PendingRequests
-                id={m.id}
-                key={m.id}
-                status={m.status}
-                time={m.timestamp}
-                photoURL={m.photoURL}
-              />
-            ))}
+          <Grid xs={12} sm={6}>
+            <Grid item>
+              <ListItem style={{ margin: "1.2rem 0" }}>
+                <Typography variant="h4" className={classes.title}>
+                  New chat request
+                </Typography>
+              </ListItem>
+              {pendingRequests?.map((m) => (
+                <PendingRequests
+                  sender={m.sender}
+                  id={m.id}
+                  key={m.id}
+                  status={m.status}
+                  time={m.timestamp}
+                  photoURL={m.photoURL}
+                />
+              ))}
+            </Grid>
+            <Grid item>
+              <ListItem style={{ margin: "1.2rem 0" }}>
+                <Typography variant="h4" className={classes.title}>
+                  Your awaited requests
+                </Typography>
+              </ListItem>
+              {awaitedRequests?.map((m) => (
+                <AwaitedRequests
+                  reciever={m.reciever}
+                  id={m.id}
+                  key={m.id}
+                  status={m.status}
+                  time={m.timestamp}
+                  photoURL={m.photoURL}
+                />
+              ))}
+            </Grid>
           </Grid>
         </Grid>
       </Dialog>

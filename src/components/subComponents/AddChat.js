@@ -9,6 +9,8 @@ import {
   DialogTitle,
   IconButton,
 } from "@material-ui/core";
+import LoadingOverlay from "react-loading-overlay";
+
 import { Chat } from "@material-ui/icons";
 import validator from "validator";
 import { db } from "../../firebase";
@@ -29,8 +31,10 @@ export default function AddChat() {
   const handleClose = () => {
     setOpen(false);
   };
-  const getPhotoURL = () => {
-    db.collection("users")
+  const getPhotoURL = async () => {
+    setPhotoURL("");
+    await db
+      .collection("users")
       .where("email", "==", newChatEmail)
       .get()
       .then((photo) => {
@@ -55,6 +59,7 @@ export default function AddChat() {
       .collection("users")
       .where("email", "==", newChatEmail)
       .get()
+
       .catch((err) => {
         setError(err.message);
         console.error("error in userAvailable", err);
@@ -74,15 +79,13 @@ export default function AddChat() {
     return getMyDocId.docs[0].id;
   };
   const addNewChatRequest = async (myDocId) => {
-    getPhotoURL();
+    await getPhotoURL();
     console.log(photoURL);
     await db
-      .collection("users")
-      .doc(myDocId)
       .collection("chatRequests")
-      .doc(newChatEmail)
-      .set({
-        email: newChatEmail,
+      .add({
+        sender: user.email,
+        reciever: newChatEmail,
         status: "pending",
         type: "requested",
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
@@ -97,17 +100,34 @@ export default function AddChat() {
       });
   };
   const checkPendingRequest = async (myDocId) => {
+    var requestData = false;
     const checkRequest = await db
-      .collection("users")
-      .doc(myDocId)
       .collection("chatRequests")
-      .where("email", "==", newChatEmail)
+      .where("sender", "==", user.email)
       .get()
       .catch((err) => {
         setError(err.message);
         console.error("err", err);
       });
-    return checkRequest;
+    checkRequest.docs.forEach((y) => {
+      console.log(y.data().reciever);
+      if (y.data().reciever === newChatEmail) {
+        console.log("TRUE");
+        requestData = true;
+      }
+    });
+    //   console.log(x.docs);
+    //   x.docs.forEach((y) => {
+    //     console.log(y.data().reciever);
+    //     if (y.data().reciever === newChatEmail) {
+    //       console.log("TRUE");
+    //       return y;
+    //     } else {
+    //       console.log("FALSE");
+    //     }
+    //   });
+    // })
+    return requestData;
   };
   const requestNewChat = async () => {
     setProcessing(true);
@@ -120,15 +140,17 @@ export default function AddChat() {
         const myDocId = await getMyDocId();
         console.log("MY DOC ID", myDocId);
         const requestStatus = await checkPendingRequest(myDocId); //check if request is already sent or not
-        if (requestStatus.empty) {
+        console.log("check req  ", requestStatus);
+        if (!requestStatus) {
           const addNewRequest = await addNewChatRequest(myDocId); //add new chat request
         } else {
+          setError("Request already pending");
           //check if chat status is pending or accepted
-          requestStatus.forEach((x) => {
-            x.data().status === "pending"
-              ? setError("Request already pending")
-              : setError("Request already accepted find it in your chat box");
-          });
+          // requestStatus.forEach((x) => {
+          //   x.data().status === "pending"
+          //     ? setError("Request already pending")
+          //     : setError("Request already accepted find it in your chat box");
+          // });
         }
       } else {
         console.log("user unavailable");
@@ -142,34 +164,37 @@ export default function AddChat() {
       <IconButton onClick={handleClickOpen}>
         <Chat />
       </IconButton>
+
       <Dialog
         open={open}
         onClose={handleClose}
         aria-labelledby="form-dialog-title"
       >
-        <DialogTitle id="form-dialog-title">Add new contact</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Add new contact by entering their email. The contact will be added
-            when they confirm your request
-          </DialogContentText>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Email Address"
-            type="email"
-            value={newChatEmail}
-            onChange={(e) => setNewChatEmail(e.target.value)}
-            fullWidth
-          />
+        <LoadingOverlay active={processing} spinner text="Processing...">
+          <DialogTitle id="form-dialog-title">Add new contact</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Add new contact by entering their email. The contact will be added
+              when they confirm your request
+            </DialogContentText>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Email Address"
+              type="email"
+              value={newChatEmail}
+              onChange={(e) => setNewChatEmail(e.target.value)}
+              fullWidth
+            />
 
-          {message && (
-            <p className="text-sm text-green-500 text-left">{message}</p>
-          )}
+            {message && (
+              <p className="text-sm text-green-500 text-left">{message}</p>
+            )}
 
-          {error && <p className="text-sm text-red-500 text-right">{error}</p>}
-        </DialogContent>
-        {!processing && (
+            {error && (
+              <p className="text-sm text-red-500 text-right">{error}</p>
+            )}
+          </DialogContent>
           <DialogActions>
             <Button onClick={handleClose} color="secondary">
               Cancel
@@ -178,7 +203,7 @@ export default function AddChat() {
               Add
             </Button>
           </DialogActions>
-        )}
+        </LoadingOverlay>
       </Dialog>
     </div>
   );
