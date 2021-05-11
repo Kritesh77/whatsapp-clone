@@ -9,6 +9,7 @@ import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import React, { useEffect, useState } from "react";
 import { Link, useHistory } from "react-router-dom";
+import firebase from "firebase";
 import { auth, provider, db } from "../firebase";
 import usernameExists from "../hooks/does-username-exist";
 const useStyles = makeStyles((theme) => ({
@@ -77,11 +78,13 @@ export default function SignInSide() {
       console.log("%c Adding new user ", "background: #222; color: red");
       await db
         .collection("users")
-        .add({
+        .doc(createdUserResult.user.uid)
+        .set({
           userId: createdUserResult.user.uid,
           username: createdUserResult.user.displayName.toLowerCase(),
           email: createdUserResult.user.email.toLowerCase(),
-          dateCreated: Date.now(),
+          photoURL: createdUserResult.user.photoURL,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         })
         .catch((error) => alert(error.message));
     } else {

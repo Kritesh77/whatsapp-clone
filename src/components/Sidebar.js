@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Link, useParams } from "react-router-dom";
 import UserContext from "../context/user";
-import { MoreVert, Search, Chat, AccountCircle } from "@material-ui/icons";
-import { IconButton, Avatar } from "@material-ui/core";
+import { Contacts, Search } from "@material-ui/icons";
+import { IconButton } from "@material-ui/core";
+import { Avatar } from "@material-ui/core";
 import { db } from "../firebase";
+import AddChat from "./subComponents/AddChat";
+import ViewContact2 from "./subComponents/ViewContacts2";
+
 function SidebarContacts({ id, name, addNewChat }) {
   const [seed, setSeed] = useState("");
   useEffect(() => {
@@ -17,6 +21,7 @@ function SidebarContacts({ id, name, addNewChat }) {
       });
     }
   };
+
   return !addNewChat ? (
     <Link to={`/chats/${id}`}>
       <div className="mx-4 py-2 flex border-b-2 items-center">
@@ -66,13 +71,14 @@ function Sidebar() {
           <img src={user.photoURL} alt="" className="object-contain" />
         </div>
 
-        <div>
+        <div className="flex">
+          <AddChat />
+          {/* <Link to="/contacts"> */}
           <IconButton>
-            <Chat />
+            {/* <Contacts onClick={}/> */}
+            <ViewContact2 />
           </IconButton>
-          <IconButton>
-            <MoreVert />
-          </IconButton>
+          {/* </Link> */}
         </div>
       </div>
       <div className=" bg-gray-100">

@@ -3,6 +3,7 @@ import Sidebar from "./components/Sidebar.js";
 import Chatroom from "./components/Chatroom";
 import Login from "./components/Login";
 import Signup from "./components/Signup";
+import ViewContacts from "./components/ViewContacts";
 import "./app.css";
 import useAuthListener from "./hooks/on-auth-change.js";
 import UserContext from "./context/user.js";
@@ -40,6 +41,7 @@ export default function App() {
             <Sidebar />
             <Switch>
               <Route path="/chats/:chatId" component={Chatroom} />
+              <Route path="/contacts" component={ViewContacts} />
               <Route path="/" component={Chatroom} />
             </Switch>
           </Suspense>

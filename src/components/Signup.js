@@ -13,6 +13,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useHistory } from "react-router-dom";
 import { auth, provider, db } from "../firebase";
 import usernameExists from "../hooks/does-username-exist";
+import firebase from "firebase";
 const useStyles = makeStyles((theme) => ({
   root: {
     height: "100vh",
@@ -69,10 +70,11 @@ export default function SignInSide() {
           password
         );
         await db.collection("users").add({
-          dateCreated: Date.now(),
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
           email: email.toLowerCase(),
           username: username.toLowerCase(),
           userId: createdUserResult.user.uid,
+          photoURL: createdUserResult.user.photoURL,
         });
       } catch (err) {
         setError(err.message);
@@ -100,7 +102,8 @@ export default function SignInSide() {
       console.log("%c Adding new user ", "background: #222; color: red");
       await db
         .collection("users")
-        .add({
+        .doc(createdUserResult.user.uid)
+        .set({
           userId: createdUserResult.user.uid,
           username: createdUserResult.user.displayName.toLowerCase(),
           email: createdUserResult.user.email.toLowerCase(),
