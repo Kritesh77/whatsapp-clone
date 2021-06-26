@@ -155,7 +155,6 @@ export default function FullScreenDialog() {
         if (doc.data().status === "pending") {
           let newContact = {
             id: doc.id,
-
             sender: doc.data().sender,
             status: doc.data().status,
             timestamp: doc.data().timestamp,
@@ -197,6 +196,9 @@ export default function FullScreenDialog() {
       .catch((err) => {
         console.error(err.message);
       });
+      // await db.collection("chatRooms").add({
+      //   member1:
+      // })
   };
   console.log("pendingRequests", pendingRequests);
   // console.log("awaitedRequests", awaitedRequests);
