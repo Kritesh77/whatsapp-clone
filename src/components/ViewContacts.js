@@ -40,7 +40,6 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 });
 
 export default function FullScreenDialog() {
-  var myDocId;
   const [contacts, setContacts] = useState([]);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -73,7 +72,7 @@ export default function FullScreenDialog() {
       .onSnapshot((snap) => {
         setContacts(
           snap.docs.map((doc) => ({
-            id: doc.id,
+            sender: doc.id,
             status: doc.data().status,
             timestamp: doc.data().timestamp,
           }))

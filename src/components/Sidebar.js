@@ -73,12 +73,9 @@ function Sidebar() {
 
         <div className="flex">
           <AddChat />
-          {/* <Link to="/contacts"> */}
           <IconButton>
-            {/* <Contacts onClick={}/> */}
             <ViewContact2 />
           </IconButton>
-          {/* </Link> */}
         </div>
       </div>
       <div className=" bg-gray-100">

@@ -10,8 +10,10 @@ import {
   IconButton,
 } from "@material-ui/core";
 import LoadingOverlay from "react-loading-overlay";
-
-import { Chat } from "@material-ui/icons";
+import getDocId from "../../hooks/get-doc-id";
+import usernameExists from "../../hooks/does-username-exist";
+import getPhotoUrl from "../../hooks/get-photoUrl";
+import { Chat, ChatRounded } from "@material-ui/icons";
 import validator from "validator";
 import { db } from "../../firebase";
 import UserContext from "../../context/user";
@@ -23,7 +25,6 @@ export default function AddChat() {
   const [error, setError] = useState("");
   const [addButton, setAddButton] = useState(true);
   const [message, setMessage] = useState("");
-  const [photoURL, setPhotoURL] = useState("");
   const [processing, setProcessing] = useState(false);
   const handleClickOpen = () => {
     setOpen(true);
@@ -31,20 +32,7 @@ export default function AddChat() {
   const handleClose = () => {
     setOpen(false);
   };
-  const getPhotoURL = async () => {
-    setPhotoURL("");
-    await db
-      .collection("users")
-      .where("email", "==", newChatEmail)
-      .get()
-      .then((photo) => {
-        // console.log(photo.docs[0].data());
-        setPhotoURL(photo.docs[0].data().photoURL);
-      })
-      .catch((err) => {
-        console.error("PHOTO URL ERROR", err);
-      });
-  };
+
   const validateEmail = (email) => {
     if (validator.isEmail(email)) {
       setError("");
@@ -54,97 +42,79 @@ export default function AddChat() {
       return false;
     }
   };
-  const userAvailable = async () => {
-    const isEmailAvailable = await db
-      .collection("users")
-      .where("email", "==", newChatEmail)
-      .get()
 
-      .catch((err) => {
-        setError(err.message);
-        console.error("error in userAvailable", err);
-      });
-    return isEmailAvailable.docs.length;
-    //returns 0 if unavailable 1 if available
-  };
-  const getMyDocId = async () => {
-    const getMyDocId = await db
-      .collection("users")
-      .where("email", "==", user.email)
-      .get()
-      .catch((err) => {
-        setError(err.message);
-        console.error("error in getMyDocId", err);
-      });
-    return getMyDocId.docs[0].id;
-  };
   const addNewChatRequest = async (myDocId) => {
-    await getPhotoURL();
-    console.log(photoURL);
+    const recieversDocId = await getDocId(newChatEmail);
+    const recieverPhotoUrl = await getPhotoUrl(newChatEmail);
+    //add to requests sent to this user(myDocId)
     await db
-      .collection("chatRequests")
-      .add({
-        sender: user.email,
+      .collection("users")
+      .doc(myDocId)
+      .collection("requestsSent")
+      .doc(newChatEmail)
+      .set({
         reciever: newChatEmail,
         status: "pending",
-        type: "requested",
+        photoUrl: recieverPhotoUrl,
+        type: "sent",
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        photoURL: photoURL,
       })
-      .then((msg) => {
+      .then(() => {
         setMessage("Chat request has been sent,wait for confirmation");
-        console.log("chat request sent", msg);
+        console.log("chat request sent");
       })
       .catch((error) => {
         setError(error.message);
       });
+    //add to reciever to the newChatEmail
+    await db
+      .collection("users")
+      .doc(recieversDocId)
+      .collection("requestsRecieved")
+      .doc(user.email)
+      .set({
+        sender: user.email,
+        status: "pending",
+        photoUrl: user.photoURL,
+        type: "requested",
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      })
+      .then(console.log("Chat request sent to reciever database"))
+      .catch((error) => {
+        setError(error.message);
+      });
   };
-  const checkPendingRequest = async (myDocId) => {
+  const checkConfirmedRequest = async (myDocId) => {
     var requestData = false;
     const checkRequest = await db
-      .collection("chatRequests")
-      .where("sender", "==", user.email)
+      .collection("users")
+      .doc(myDocId)
+      .collection("confirmedContacts")
+      .doc(newChatEmail)
       .get()
       .catch((err) => {
         setError(err.message);
         console.error("err", err);
       });
-    checkRequest.docs.forEach((y) => {
-      console.log(y.data().reciever);
-      if (y.data().reciever === newChatEmail) {
-        console.log("TRUE");
-        requestData = true;
-      }
-    });
-    //   console.log(x.docs);
-    //   x.docs.forEach((y) => {
-    //     console.log(y.data().reciever);
-    //     if (y.data().reciever === newChatEmail) {
-    //       console.log("TRUE");
-    //       return y;
-    //     } else {
-    //       console.log("FALSE");
-    //     }
-    //   });
-    // })
-    return requestData;
+    // console.log(checkRequest);
+    return checkRequest.exists;
   };
   const requestNewChat = async () => {
     setProcessing(true);
     setError("");
     setMessage("");
     if (validateEmail(newChatEmail)) {
-      const isuserAvailable = await userAvailable();
+      const isuserAvailable = await usernameExists(newChatEmail);
       console.log(isuserAvailable); //check is given email is available or not
       if (isuserAvailable) {
-        const myDocId = await getMyDocId();
+        const myDocId = await getDocId(user.email);
         console.log("MY DOC ID", myDocId);
-        const requestStatus = await checkPendingRequest(myDocId); //check if request is already sent or not
+        const requestStatus = await checkConfirmedRequest(myDocId); //check if request is already sent or not
         console.log("check req  ", requestStatus);
         if (!requestStatus) {
           const addNewRequest = await addNewChatRequest(myDocId); //add new chat request
         } else {
-          setError("Request already pending");
+          setError("Request already accepted");
           //check if chat status is pending or accepted
           // requestStatus.forEach((x) => {
           //   x.data().status === "pending"
