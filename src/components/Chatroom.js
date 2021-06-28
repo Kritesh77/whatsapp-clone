@@ -1,14 +1,10 @@
 import React, { useState, useEffect, useContext } from "react";
 import {
-  MoreVert,
   InsertEmoticon,
-  Chat,
-  AccountCircle,
-  Navigation,
   ArrowBackRounded,
   ExitToApp,
 } from "@material-ui/icons";
-import { Link, useParams } from "react-router-dom";
+import { useHistory, useParams } from "react-router-dom";
 import { IconButton } from "@material-ui/core";
 import { db, auth } from "../firebase";
 import UserContext from "../context/user";
@@ -33,22 +29,13 @@ function Message({ name, message, timestamp, userMessage }) {
   );
 }
 function Chatroom() {
+  const history = useHistory();
   const [roomName, setroomName] = useState("");
   const { user } = useContext(UserContext);
   const [chatMessage, setchatMessage] = useState([]);
   const { chatId } = useParams();
   const [input, setInput] = useState("");
-  console.log("USERDISPLAYNAME", user.displayName);
 
-  const handleMessage = (e) => {
-    e.preventDefault();
-    db.collection("chatContacts").doc(chatId).collection("messages").add({
-      message: input,
-      name: user.displayName,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    });
-    setInput("");
-  };
   useEffect(() => {
     console.log("USE EFFECT RUNNIN");
     if (chatId) {
@@ -68,16 +55,27 @@ function Chatroom() {
           console.log("XXX", xxx);
         });
 
-      console.log("CHAY MESSAGE", chatMessage);
+      console.log("CHAT MESSAGE", chatMessage);
     }
   }, [chatId]);
+
+  const handleMessage = (e) => {
+    e.preventDefault();
+    db.collection("chatContacts").doc(chatId).collection("messages").add({
+      message: input,
+      name: user.displayName,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    setInput("");
+  };
+
   return (
     <div className="flex-1 w-2/3 chatroom_container flex-col  h-full border flex">
       <div
         className="flex w-full items-center bg-gray-200 py-2 px-4"
         id="chatroom_header"
       >
-        <ArrowBackRounded className={`text-gray-700 h-8`} />
+        <ArrowBackRounded className="block md:hidden text-gray-700 h-8" />
         <div className="h-10 w-10 rounded-full overflow-hidden ml-4">
           <img src={user.photoURL} alt="" className="object-contain" />
         </div>
@@ -87,7 +85,12 @@ function Chatroom() {
             Member 1,Member 2,Member 3
           </p>
         </div>
-        <IconButton onClick={() => auth.signOut()}>
+        <IconButton
+          onClick={() => {
+            auth.signOut();
+            history.push("/");
+          }}
+        >
           <ExitToApp />
         </IconButton>
       </div>

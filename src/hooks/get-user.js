@@ -4,5 +4,5 @@ export default async function getUser(email) {
     .collection("users")
     .where("email", "==", email.toLowerCase())
     .get();
-  return docId.docs[0];
+  return docId.docs[0].data();
 }

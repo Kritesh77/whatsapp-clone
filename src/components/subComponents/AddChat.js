@@ -46,6 +46,7 @@ export default function AddChat() {
   const addNewChatRequest = async (myDocId) => {
     const recieversDocId = await getDocId(newChatEmail);
     const recieverPhotoUrl = await getPhotoUrl(newChatEmail);
+
     //add to requests sent to this user(myDocId)
     await db
       .collection("users")
@@ -89,15 +90,15 @@ export default function AddChat() {
     const checkRequest = await db
       .collection("users")
       .doc(myDocId)
-      .collection("confirmedContacts")
+      .collection("requestsSent")
       .doc(newChatEmail)
       .get()
       .catch((err) => {
         setError(err.message);
         console.error("err", err);
       });
-    // console.log(checkRequest);
-    return checkRequest.exists;
+    console.log(checkRequest);
+    return checkRequest;
   };
   const requestNewChat = async () => {
     setProcessing(true);
@@ -108,19 +109,18 @@ export default function AddChat() {
       console.log(isuserAvailable); //check is given email is available or not
       if (isuserAvailable) {
         const myDocId = await getDocId(user.email);
-        console.log("MY DOC ID", myDocId);
         const requestStatus = await checkConfirmedRequest(myDocId); //check if request is already sent or not
         console.log("check req  ", requestStatus);
-        if (!requestStatus) {
+        if (!requestStatus.exists) {
           const addNewRequest = await addNewChatRequest(myDocId); //add new chat request
         } else {
-          setError("Request already accepted");
-          //check if chat status is pending or accepted
-          // requestStatus.forEach((x) => {
-          //   x.data().status === "pending"
-          //     ? setError("Request already pending")
-          //     : setError("Request already accepted find it in your chat box");
-          // });
+          if (requestStatus.data().status === "pending")
+            setError("Request already pending");
+          else if (requestStatus.data().status === "accepted")
+            setMessage(
+              "Request already accepted. Find user in your contacts and start chatting..."
+            );
+          else setError("Request declined by the ");
         }
       } else {
         console.log("user unavailable");

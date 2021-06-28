@@ -1,61 +1,77 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import UserContext from "../context/user";
-import { Contacts, Search } from "@material-ui/icons";
+import { Search } from "@material-ui/icons";
 import { IconButton } from "@material-ui/core";
 import { Avatar } from "@material-ui/core";
 import { db } from "../firebase";
 import AddChat from "./subComponents/AddChat";
 import ViewContact2 from "./subComponents/ViewContacts2";
+import getUser from "../hooks/get-user";
+import Skeleton from "react-loading-skeleton";
 
-function SidebarContacts({ id, name, addNewChat }) {
+function SidebarContacts({ id, name }) {
   const [seed, setSeed] = useState("");
+  const [username, setUsername] = useState("");
+  const [photoUrl, setPhotoUrl] = useState("");
+  const [lastMessage, setLastMessage] = useState("");
+  const [lastSeen, setLastSeen] = useState("");
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
-    setSeed(Math.floor(Math.random() * 5000));
+    setLoading(true);
+    const userDetails = getUser(name).then((data) => {
+      setUsername(data.username);
+      setPhotoUrl(data.photoURL);
+      // setLoading(false);
+    });
   }, []);
-  const createChat = () => {
-    const newChat = prompt("Enter new chat name");
-    if (newChat) {
-      db.collection("chatContacts").add({
-        name: newChat,
-      });
-    }
-  };
-
-  return !addNewChat ? (
+  useEffect(() => {
+    console.log(username);
+  }, [username]);
+  return !loading ? (
     <Link to={`/chats/${id}`}>
       <div className="mx-4 py-2 flex border-b-2 items-center">
         <div className="">
-          <Avatar src={`https://avatars.dicebear.com/api/human/${seed}.svg`} />
+          <Avatar src={photoUrl} />
         </div>
         <div className="px-4">
-          <h1 className="font-bold inline-block text-lg ">{name}</h1>
+          <h1 className="font-bold inline-block text-lg ">{username}</h1>
           <p className="text-gray-800">This is my chat message</p>
         </div>
       </div>
     </Link>
   ) : (
-    <div className="mx-4 py-2 border-b-2" onClick={createChat}>
-      <h1 className="font-bold inline-block text-2xl cursor-pointer ml-2 text-lg text-bold">
-        Create new chat
-      </h1>
+    <div classname="flex">
+      <Skeleton className=" flex-1">
+        <Skeleton circle={true} height={40} width={40} className="w-1/4 flex" />
+      </Skeleton>
     </div>
   );
 }
 
-function Sidebar() {
+export default function Sidebar() {
   const { user } = useContext(UserContext);
   const [chats, setChats] = useState([]);
   useEffect(() => {
-    const unsubscribe = db.collection("chatContacts").onSnapshot((snap) => {
-      setChats(
-        snap.docs.map((doc) => ({
-          id: doc.id,
-          data: doc.data(),
-        }))
-      );
-      // console.log(chats);
-    });
+    console.log(chats);
+  }, [chats]);
+  useEffect(() => {
+    const unsubscribe = db
+      .collection("chatRooms")
+      .where("members", "array-contains", user.email)
+      .onSnapshot((snap) => {
+        setChats(
+          snap.docs.map((doc) => ({
+            id: doc.id,
+            members:
+              doc.data().members[
+                doc.data().members.length -
+                  doc.data().members.findIndex((x) => x === user.email) -
+                  1
+              ],
+          }))
+        );
+      });
     return () => {
       unsubscribe();
     };
@@ -89,13 +105,10 @@ function Sidebar() {
         </div>
       </div>
       <div className="w-full overflow-y-scroll " id="contact_container">
-        <SidebarContacts addNewChat />
         {chats.map((c) => {
-          return <SidebarContacts key={c.id} id={c.id} name={c.data.name} />;
+          return <SidebarContacts key={c.id} id={c.id} name={c.members} />;
         })}
       </div>
     </div>
   );
 }
-
-export default Sidebar;

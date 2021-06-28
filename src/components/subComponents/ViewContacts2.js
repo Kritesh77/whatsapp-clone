@@ -168,14 +168,25 @@ export default function FullScreenDialog() {
         photoUrl: user.photoURL,
       });
   };
+
   const addNewRoom = async (contact) => {
     console.log(contact, user.email);
     const checkRoomExists = await db
       .collection("chatRooms")
-      .where("members", "array-contains-any", [contact, user.email])
-      .get();
+      .where("members", "array-contains", contact)
+      .get()
+      .then((x) => {
+        x.docs.forEach((f) => {
+          if (f.data().members.includes(user.email)) {
+            //room already exists
+            //redirect the user to that room id
+            console.log(f.id);
+          }
+        });
+      });
     console.log(checkRoomExists);
   };
+
   function ConfirmedRequests({ username, contact, timestamp, photoUrl }) {
     const date = new Date(timestamp?.toDate()).toDateString();
     return (
