@@ -155,14 +155,37 @@ export default function FullScreenDialog() {
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         photoUrl: senderPhotoUrl,
       });
+    //add to newConfirmedRequess senders database collection
+    await db
+      .collection("users")
+      .doc(senderDocId)
+      .collection("confirmedRequests")
+      .doc(user.email)
+      .set({
+        contact: user.email,
+        username: user.displayName,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        photoUrl: user.photoURL,
+      });
   };
-
+  const addNewRoom = async (contact) => {
+    console.log(contact, user.email);
+    const checkRoomExists = await db
+      .collection("chatRooms")
+      .where("members", "array-contains-any", [contact, user.email])
+      .get();
+    console.log(checkRoomExists);
+  };
   function ConfirmedRequests({ username, contact, timestamp, photoUrl }) {
     const date = new Date(timestamp?.toDate()).toDateString();
-
     return (
       <List>
-        <ListItem button>
+        <ListItem
+          button
+          onClick={() => {
+            addNewRoom(contact);
+          }}
+        >
           <div className="h-10 w-10 rounded-full overflow-hidden border mx-4">
             <img src={photoUrl} alt="" className="object-contain " />
           </div>
@@ -230,7 +253,7 @@ export default function FullScreenDialog() {
           </Toolbar>
         </AppBar>
         <Grid container>
-          <Grid item xs={12} sm={6} border={1}>
+          <Grid item xs={12} sm={7} border={1}>
             <ListItem style={{ margin: "1.2rem 0" }}>
               <Typography variant="h4" className={classes.title}>
                 Contacts
@@ -245,14 +268,17 @@ export default function FullScreenDialog() {
                 key={i}
               />
             ))}
+            {recievedRequests.length === 0 && (
+              <ListItem className="mt-4  border-b-2">
+                <Typography variant="h6">No requests here</Typography>
+              </ListItem>
+            )}
           </Grid>
           {/* //new contact list grid */}
-          <Grid xs={12} sm={6}>
+          <Grid xs={12} sm={5}>
             <Grid item>
-              <ListItem style={{ margin: "1.2rem 0" }}>
-                <Typography variant="h4" className={classes.title}>
-                  New chat request
-                </Typography>
+              <ListItem className="mt-4  border-b-2">
+                <Typography variant="h4">New chat request</Typography>
               </ListItem>
               {recievedRequests?.map((m, i) => {
                 if (m.status === "pending") {
@@ -267,12 +293,15 @@ export default function FullScreenDialog() {
                   );
                 }
               })}
+              {recievedRequests.length === 0 && (
+                <ListItem className="mt-4  border-b-2">
+                  <Typography variant="h6">No requests here</Typography>
+                </ListItem>
+              )}
             </Grid>
             <Grid item>
-              <ListItem style={{ margin: "1.2rem 0" }}>
-                <Typography variant="h4" className={classes.title}>
-                  Your sent requests
-                </Typography>
+              <ListItem className="mt-4 border-b-2">
+                <Typography variant="h4">Your sent requests</Typography>
               </ListItem>
               {sentRequests?.map((m, i) => (
                 <RequestsSent
@@ -283,6 +312,13 @@ export default function FullScreenDialog() {
                   key={i}
                 />
               ))}
+              {sentRequests.length === 0 && (
+                <ListItem>
+                  <Typography className="text-blue-600 font-light">
+                    No requests here
+                  </Typography>
+                </ListItem>
+              )}
             </Grid>
           </Grid>
         </Grid>
