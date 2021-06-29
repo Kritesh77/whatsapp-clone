@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
+import { useHistory, useParams } from "react-router-dom";
 import { makeStyles } from "@material-ui/core/styles";
 import {
   Grid,
@@ -35,6 +36,7 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 });
 
 export default function FullScreenDialog() {
+  const history = useHistory();
   const [recievedRequests, setRecievedRequests] = useState([]);
   const [sentRequests, setSentRequests] = useState([]);
   const docId = useRef();
@@ -151,7 +153,7 @@ export default function FullScreenDialog() {
       .doc(sender)
       .set({
         contact: sender,
-        username: senderDetails.data().username,
+        username: senderDetails.username,
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         photoUrl: senderPhotoUrl,
       });
@@ -173,18 +175,55 @@ export default function FullScreenDialog() {
     console.log(contact, user.email);
     const checkRoomExists = await db
       .collection("chatRooms")
-      .where("members", "array-contains", contact)
+      .where("members", "array-contains", user.email)
       .get()
       .then((x) => {
-        x.docs.forEach((f) => {
-          if (f.data().members.includes(user.email)) {
-            //room already exists
-            //redirect the user to that room id
-            console.log(f.id);
-          }
-        });
+        if (!x.empty) {
+          x.docs.forEach((f) => {
+            console.log(f);
+            if (f.data().members.includes(contact)) {
+              //room already exists , redirect the user to that room id
+              console.log(
+                "%c Room already existing...Redirecting",
+                "background-color:green",
+                f.id
+              );
+              history.push("/chats/" + f.id);
+              setOpen(false);
+            }
+            //    else {
+            //     console.log("%c Adding new Room", "background-color:green");
+            //     // user has rooms but not with this contact make him a new one
+            //     db.collection("chatRooms")
+            //       .add({
+            //         members: [user.email, contact],
+            //         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            //       })
+            //       .then((x) => {
+            //         console.log("room created", x);
+            //         history.push("/chats/" + x.id);
+            //         setOpen(false);
+            //       });
+            //   }
+          });
+        } else {
+          //brand new user has no rooms so make him a new one
+          console.log(
+            "%c Adding room for the first time",
+            "background-color:green"
+          );
+          db.collection("chatRooms")
+            .add({
+              members: [user.email, contact],
+              timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            })
+            .then((x) => {
+              console.log("room created", x);
+              history.push("/chats/" + x.id);
+              setOpen(false);
+            });
+        }
       });
-    console.log(checkRoomExists);
   };
 
   function ConfirmedRequests({ username, contact, timestamp, photoUrl }) {
@@ -243,7 +282,7 @@ export default function FullScreenDialog() {
   }
 
   return (
-    <>
+    <React.Fragment>
       <Contacts variant="outlined" color="primary" onClick={handleClickOpen} />
       <Dialog
         fullScreen
@@ -334,6 +373,6 @@ export default function FullScreenDialog() {
           </Grid>
         </Grid>
       </Dialog>
-    </>
+    </React.Fragment>
   );
 }

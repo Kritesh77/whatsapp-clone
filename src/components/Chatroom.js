@@ -5,10 +5,12 @@ import {
   ExitToApp,
 } from "@material-ui/icons";
 import { useHistory, useParams } from "react-router-dom";
+import getUser from "../hooks/get-user";
 import { IconButton } from "@material-ui/core";
 import { db, auth } from "../firebase";
 import UserContext from "../context/user";
 import firebase from "firebase";
+
 function Message({ name, message, timestamp, userMessage }) {
   const date = new Date(timestamp?.toDate()).toUTCString();
   return (
@@ -28,40 +30,51 @@ function Message({ name, message, timestamp, userMessage }) {
     </>
   );
 }
-function Chatroom() {
+export default function Chatroom() {
   const history = useHistory();
   const [roomName, setroomName] = useState("");
   const { user } = useContext(UserContext);
   const [chatMessage, setchatMessage] = useState([]);
   const { chatId } = useParams();
   const [input, setInput] = useState("");
-
+  const [username, setUsername] = useState("");
+  const [photoUrl, setPhotoUrl] = useState("");
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
-    console.log("USE EFFECT RUNNIN");
+    // console.log("USE EFFECT RUNNIN");
     if (chatId) {
-      db.collection("chatContacts")
+      db.collection("chatRooms")
         .doc(chatId)
-        .onSnapshot((snap) => {
-          console.log("SNAP ROOMNAME", snap);
-          setroomName(snap.data().name);
+        .get()
+        .then((x) => {
+          // console.log(x);
+          x.data()?.members.forEach((y) => {
+            // console.log(y);
+            if (y !== user.email) {
+              const getContactDetails = getUser(y).then((z) => {
+                setUsername(z.username);
+                setPhotoUrl(z.photoURL);
+                // console.log(z);
+              });
+            }
+          });
         });
-      db.collection("chatContacts")
+      db.collection("chatRooms")
         .doc(chatId)
         .collection("messages")
         .orderBy("timestamp", "asc")
         .onSnapshot((snapshot) => {
           const xxx = snapshot.docs.map((doc) => doc.data());
           setchatMessage(xxx);
-          console.log("XXX", xxx);
+          // console.log("XXX", xxx);
         });
-
-      console.log("CHAT MESSAGE", chatMessage);
+      // console.log("CHAT MESSAGE", chatMessage);
     }
   }, [chatId]);
 
   const handleMessage = (e) => {
     e.preventDefault();
-    db.collection("chatContacts").doc(chatId).collection("messages").add({
+    db.collection("chatRooms").doc(chatId).collection("messages").add({
       message: input,
       name: user.displayName,
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
@@ -77,13 +90,10 @@ function Chatroom() {
       >
         <ArrowBackRounded className="block md:hidden text-gray-700 h-8" />
         <div className="h-10 w-10 rounded-full overflow-hidden ml-4">
-          <img src={user.photoURL} alt="" className="object-contain" />
+          <img src={photoUrl} className="object-contain" />
         </div>
         <div className="flex-1 mx-4">
-          <p className="font-bold"> {roomName}</p>
-          <p className="font-light text-xs text-gray-700 ">
-            Member 1,Member 2,Member 3
-          </p>
+          <p className="font-bold capitalize"> {username}</p>
         </div>
         <IconButton
           onClick={() => {
@@ -135,5 +145,3 @@ function Chatroom() {
     </div>
   );
 }
-
-export default Chatroom;

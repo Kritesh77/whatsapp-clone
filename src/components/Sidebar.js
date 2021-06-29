@@ -22,11 +22,11 @@ function SidebarContacts({ id, name }) {
     const userDetails = getUser(name).then((data) => {
       setUsername(data.username);
       setPhotoUrl(data.photoURL);
-      // setLoading(false);
+      setLoading(false);
     });
   }, []);
   useEffect(() => {
-    console.log(username);
+    // console.log(username);
   }, [username]);
   return !loading ? (
     <Link to={`/chats/${id}`}>
@@ -35,7 +35,9 @@ function SidebarContacts({ id, name }) {
           <Avatar src={photoUrl} />
         </div>
         <div className="px-4">
-          <h1 className="font-bold inline-block text-lg ">{username}</h1>
+          <h1 className="font-bold inline-block text-lg capitalize">
+            {username}
+          </h1>
           <p className="text-gray-800">This is my chat message</p>
         </div>
       </div>
