@@ -18,7 +18,7 @@ function Message({ name, message, timestamp, userMessage }) {
       <div
         className={`${
           userMessage && "chat_right bg-green-300"
-        } px-2 py-1 block chatbox_message_container justify-end items-end bg-white rounded-xl mb-1 relative`}
+        } px-2 py-1 block chatbox_message_container justify-end items-end bg-white rounded-xl relative`}
       >
         <span className="text-red-600 font-bold text-sm ">{name}</span>
         <p className=" mr-12 break-full whitespace-pre">{message}</p>
@@ -40,8 +40,8 @@ export default function Chatroom() {
   const [username, setUsername] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    // console.log("USE EFFECT RUNNIN");
     if (chatId) {
       db.collection("chatRooms")
         .doc(chatId)
@@ -51,14 +51,21 @@ export default function Chatroom() {
           x.data()?.members.forEach((y) => {
             // console.log(y);
             if (y !== user.email) {
-              const getContactDetails = getUser(y).then((z) => {
-                setUsername(z.username);
-                setPhotoUrl(z.photoURL);
-                // console.log(z);
-              });
+              getUser(y)
+                .then((z) => {
+                  setUsername(z.username);
+                  setPhotoUrl(z.photoURL);
+                  // console.log(z);
+                })
+                .then(console.log("chat name and image set"));
             }
           });
         });
+    }
+  }, [db, chatId]);
+
+  useEffect(() => {
+    if (chatId) {
       db.collection("chatRooms")
         .doc(chatId)
         .collection("messages")
@@ -66,11 +73,14 @@ export default function Chatroom() {
         .onSnapshot((snapshot) => {
           const xxx = snapshot.docs.map((doc) => doc.data());
           setchatMessage(xxx);
-          // console.log("XXX", xxx);
+          console.log("chat messages set", snapshot);
         });
-      // console.log("CHAT MESSAGE", chatMessage);
     }
   }, [chatId]);
+
+  useEffect(() => {
+    console.log("CHAT message", chatMessage, "Chat id", chatId);
+  }, [chatMessage]);
 
   const handleMessage = (e) => {
     e.preventDefault();
@@ -105,7 +115,7 @@ export default function Chatroom() {
         </IconButton>
       </div>
       {/* chat box */}
-      <div className="py-8 overflow-y-scroll  overflow-x-hidden flex-1 bg-gradient-to-r from-gray-400 to-gray-200  px-4">
+      <div className="py-8 overflow-y-scroll overflow-x-hidden flex-1 bg-gradient-to-r from-gray-400 to-gray-200  px-4">
         {chatMessage.map((m) => {
           let userMessage = false;
           user.displayName === m.name

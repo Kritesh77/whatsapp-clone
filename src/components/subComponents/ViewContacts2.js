@@ -66,6 +66,10 @@ export default function FullScreenDialog() {
   }, [sentRequests]);
 
   useEffect(() => {
+    console.log("%c Contacts ", "background-color:red", confirmedRequests);
+  }, [confirmedRequests]);
+
+  useEffect(() => {
     db.collection("users")
       .doc(user.uid)
       .collection("confirmedRequests")
@@ -179,10 +183,12 @@ export default function FullScreenDialog() {
       .get()
       .then((x) => {
         if (!x.empty) {
+          var chatFound = false;
           x.docs.forEach((f) => {
             console.log(f);
             if (f.data().members.includes(contact)) {
               //room already exists , redirect the user to that room id
+              chatFound = true;
               console.log(
                 "%c Room already existing...Redirecting",
                 "background-color:green",
@@ -191,21 +197,20 @@ export default function FullScreenDialog() {
               history.push("/chats/" + f.id);
               setOpen(false);
             }
-            //    else {
-            //     console.log("%c Adding new Room", "background-color:green");
-            //     // user has rooms but not with this contact make him a new one
-            //     db.collection("chatRooms")
-            //       .add({
-            //         members: [user.email, contact],
-            //         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            //       })
-            //       .then((x) => {
-            //         console.log("room created", x);
-            //         history.push("/chats/" + x.id);
-            //         setOpen(false);
-            //       });
-            //   }
           });
+          if (!chatFound) {
+            console.log("%c Adding room ", "background-color:green");
+            db.collection("chatRooms")
+              .add({
+                members: [user.email, contact],
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+              })
+              .then((x) => {
+                console.log("room created", x);
+                history.push("/chats/" + x.id);
+                setOpen(false);
+              });
+          }
         } else {
           //brand new user has no rooms so make him a new one
           console.log(
