@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
-import { useHistory, useParams } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import { makeStyles } from "@material-ui/core/styles";
 import {
   Grid,
@@ -41,8 +41,6 @@ export default function FullScreenDialog() {
   const [sentRequests, setSentRequests] = useState([]);
   const docId = useRef();
   const [confirmedRequests, setConfirmedRequests] = useState([]);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const classes = useStyles();
   const [open, setOpen] = useState(false);
   const { user } = useContext(UserContext);

@@ -5,7 +5,8 @@
 }
 
 body {
-  font-family: "Roboto";
+  background-color: #eeefef;
+  font-family: "Noto Sans JP", sans-serif;
 }
 .message_time {
   bottom: 2px;
@@ -14,8 +15,50 @@ body {
 
 .chatbox_message_container {
   width: fit-content;
+  padding: 0.5rem 1.5rem;
 }
 
 .chat_right {
   margin-left: auto;
+}
+
+.gray {
+  background: #eeefef;
+}
+.chat-gray {
+  background-color: #e0e0e0;
+}
+.chat-blue {
+  background: #326dec;
+  color: white;
+}
+.dark-gray {
+  background: #a5a4a4;
+}
+.light-blue {
+  background: #b5c8e2;
+}
+.blue {
+  background: #043ef6;
+}
+.swatch_5 {
+  background: #5f9cf1;
+}
+.swatch_6 {
+  background: #1f62f0;
+}
+.swatch_7 {
+  background: #3d2a2d;
+}
+.swatch_8 {
+  background: #a56448;
+}
+
+.online-dot {
+  position: absolute;
+  height: 0.5rem;
+  width: 0.5rem;
+  border-radius: 100%;
+  bottom: -1px;
+  right: 5px;
 }

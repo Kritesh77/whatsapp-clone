@@ -13,7 +13,7 @@ import LoadingOverlay from "react-loading-overlay";
 import getDocId from "../../hooks/get-doc-id";
 import usernameExists from "../../hooks/does-username-exist";
 import getPhotoUrl from "../../hooks/get-photoUrl";
-import { Chat, ChatRounded } from "@material-ui/icons";
+import { Chat } from "@material-ui/icons";
 import validator from "validator";
 import { db } from "../../firebase";
 import UserContext from "../../context/user";

@@ -6,6 +6,7 @@
   "dependencies": {
     "@material-ui/core": "^4.11.4",
     "@material-ui/icons": "^4.11.2",
+    "antd": "^4.16.6",
     "autoprefixer": "^9.8.6",
     "firebase": "^8.4.2",
     "postcss": "^7.0.35",

@@ -63,7 +63,6 @@ export default function SignInSide() {
     const doesUsernameExists = await usernameExists(email);
     if (doesUsernameExists === 0) {
       console.log("%c User addinn", "background: #222; color: red");
-
       try {
         const createdUserResult = await auth.createUserWithEmailAndPassword(
           email,
@@ -85,7 +84,6 @@ export default function SignInSide() {
       setEmail("");
       setPassword("");
       setError("That username is already taken, please try another!");
-
       console.log("%c User already existing", "background: #222; color: red");
     }
   };
