@@ -8,20 +8,13 @@ import { db, timestamp } from "./firebase";
 import useAuthListener from "./hooks/on-auth-change.js";
 import UserContext from "./context/user.js";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import MobileSidebar from "./components/MobileSidebar";
+import useResize from "./hooks/useResize.js";
 export default function App() {
   // const [user, setUser] = useState(null);
   const { user } = useAuthListener();
-  const [isMobile, setIsMobile] = useState();
-  useEffect(() => {
-    let windowWidth;
-    const handleResize = () => {
-      window.innerWidth <= "768" ? setIsMobile(true) : setIsMobile(false);
-    };
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
+  let isMobile = useResize();
+
   useEffect(() => {
     window.addEventListener("beforeunload", (e) => {
       e.preventDefault();
@@ -36,6 +29,7 @@ export default function App() {
       }
     });
   }, []);
+
   console.log("isMobile IF :", isMobile);
 
   return (
@@ -54,7 +48,11 @@ export default function App() {
             <Sidebar />
             <Switch>
               <Route path="/chats/:chatId" component={Chatroom} />
-              <Route path="/" component={Chatroom} />
+              {isMobile ? (
+                <Route path="/" component={MobileSidebar} />
+              ) : (
+                <Route path="/" component={Chatroom} />
+              )}
             </Switch>
           </Suspense>
         </Router>

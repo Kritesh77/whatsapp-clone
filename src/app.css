@@ -1,11 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  /* transition: 0.2s all ease-in; */
 }
 
 body {
   background-color: #eeefef;
+  overflow-x: hidden;
+  width: 100vw;
   font-family: "Noto Sans JP", sans-serif;
 }
 .message_time {
@@ -61,4 +68,22 @@ body {
   border-radius: 100%;
   bottom: -1px;
   right: 5px;
+}
+.text-shadow {
+  text-shadow: 3px 3px 10px rgba(0, 0, 0, 1);
+}
+
+@media only screen and (max-width: 600px) {
+  .chatbox_message_container {
+    max-width: 60%;
+    padding: 0.5rem 1rem;
+  }
+}
+
+input {
+  outline: none;
+}
+.sidebar-active {
+  width: 80vw;
+  z-index: 20;
 }

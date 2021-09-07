@@ -11,12 +11,13 @@ import {
   Divider,
   AppBar,
   Toolbar,
+  Avatar,
   IconButton,
   Typography,
 } from "@material-ui/core";
 import { Contacts, CheckRounded, Delete, Close } from "@material-ui/icons";
 import UserContext from "../../context/user";
-import { db } from "../../firebase";
+import { db, timestamp } from "../../firebase";
 import getDocId from "../../hooks/get-doc-id";
 import firebase from "firebase";
 import getUser from "../../hooks/get-user";
@@ -123,11 +124,12 @@ export default function FullScreenDialog() {
       });
   }, [user]);
 
-  const handleConfirmChat = async (sender) => {
-    const senderPhotoUrl = await getPhotoUrl(sender);
-    console.log(user);
-    const senderDocId = await getDocId(sender);
-    const senderDetails = await getUser(sender);
+  const handleConfirmChat = async (data) => {
+    const sender = data.sender;
+    const senderPhotoUrl = data.photoUrl;
+    console.log("USER", user);
+    const senderDocId = await getDocId(data.sender);
+    const senderDetails = data;
     //update in recievers database
     await db
       .collection("users")
@@ -146,7 +148,7 @@ export default function FullScreenDialog() {
       .update({
         status: "accepted",
       });
-
+    console.log(sender, senderDetails.displayName, user.uid, senderPhotoUrl);
     //add to newConfirmedRequess recievers database collection
     await db
       .collection("users")
@@ -155,8 +157,8 @@ export default function FullScreenDialog() {
       .doc(sender)
       .set({
         contact: sender,
-        username: senderDetails.username,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        username: sender,
+        timestamp,
         photoUrl: senderPhotoUrl,
       });
     //add to newConfirmedRequess senders database collection
@@ -168,7 +170,7 @@ export default function FullScreenDialog() {
       .set({
         contact: user.email,
         username: user.displayName,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        timestamp,
         photoUrl: user.photoURL,
       });
   };
@@ -239,9 +241,7 @@ export default function FullScreenDialog() {
             addNewRoom(contact);
           }}
         >
-          <div className="h-10 w-10 rounded-full overflow-hidden border mx-4">
-            <img src={photoUrl} alt="" className="object-contain " />
-          </div>
+          <Avatar src={photoUrl} className="md:mx-4 mr-2" />
           <ListItemText primary={username} secondary={contact} />
           <ListItemText primary="Accepted on" secondary={date} />
         </ListItem>
@@ -250,15 +250,13 @@ export default function FullScreenDialog() {
     );
   }
 
-  function RequestsRecieved({ id, sender, status, timestamp, photoUrl }) {
+  function RequestsRecieved({ data }) {
     return (
       <List>
         <ListItem button>
-          <div className="h-10 w-10 rounded-full overflow-hidden border mx-4">
-            <img src={photoUrl} alt="" className="object-contain" />
-          </div>
-          <ListItemText primary={sender} secondary={status} />
-          <IconButton onClick={() => handleConfirmChat(sender)}>
+          <Avatar src={data.photoUrl} className="md:mx-4 mr-2" />
+          <ListItemText primary={data.sender} secondary={data.status} />
+          <IconButton onClick={() => handleConfirmChat(data)}>
             <CheckRounded style={{ color: "green" }} />
           </IconButton>
           <IconButton aria-label="delete">
@@ -274,9 +272,7 @@ export default function FullScreenDialog() {
     return (
       <List>
         <ListItem button>
-          <div className="h-10 w-10 rounded-full overflow-hidden border mx-4">
-            <img src={photoUrl} alt="" className="object-contain" />
-          </div>
+          <Avatar src={photoUrl} className="md:mx-4 mr-2" />
           <ListItemText primary={reciever} secondary={status} />
         </ListItem>
         <Divider />
@@ -323,7 +319,9 @@ export default function FullScreenDialog() {
             ))}
             {recievedRequests.length === 0 && (
               <ListItem className="mt-4  border-b-2">
-                <Typography variant="h6">No requests here</Typography>
+                <h1 className="py-2 text-2xl font-light text-gray-500">
+                  No requests yet
+                </h1>{" "}
               </ListItem>
             )}
           </Grid>
@@ -331,24 +329,18 @@ export default function FullScreenDialog() {
           <Grid xs={12} sm={5}>
             <Grid item>
               <ListItem className="mt-4  border-b-2">
-                <Typography variant="h4">New chat request</Typography>
+                <Typography variant="h4">Recieved chat requests</Typography>
               </ListItem>
               {recievedRequests?.map((m, i) => {
                 if (m.status === "pending") {
-                  return (
-                    <RequestsRecieved
-                      sender={m.sender}
-                      timestamp={m.timestamp}
-                      status={m.status}
-                      photoUrl={m.photoUrl}
-                      key={i}
-                    />
-                  );
+                  return <RequestsRecieved data={m} key={i} />;
                 }
               })}
-              {recievedRequests.length === 0 && (
+              {!recievedRequests.every((x) => x.status === "pending") && (
                 <ListItem className="mt-4  border-b-2">
-                  <Typography variant="h6">No requests here</Typography>
+                  <h1 className="py-2 text-2xl font-light text-gray-500">
+                    No requests recieved yet
+                  </h1>
                 </ListItem>
               )}
             </Grid>
@@ -367,9 +359,9 @@ export default function FullScreenDialog() {
               ))}
               {sentRequests.length === 0 && (
                 <ListItem>
-                  <Typography className="text-blue-600 font-light">
-                    No requests here
-                  </Typography>
+                  <h1 className="py-2 text-2xl font-light text-gray-500">
+                    No requests yet
+                  </h1>
                 </ListItem>
               )}
             </Grid>

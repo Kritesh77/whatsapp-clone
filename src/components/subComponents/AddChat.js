@@ -45,8 +45,8 @@ export default function AddChat() {
 
   const addNewChatRequest = async (myDocId) => {
     const recieversDocId = await getDocId(newChatEmail);
-    const recieverPhotoUrl = await getPhotoUrl(newChatEmail);
-
+    const recieverPhotoUrl = (await getPhotoUrl(newChatEmail)) || "";
+    console.log("recieverPhotoUrl", recieverPhotoUrl);
     //add to requests sent to this user(myDocId)
     await db
       .collection("users")
@@ -75,6 +75,7 @@ export default function AddChat() {
       .doc(user.email)
       .set({
         sender: user.email,
+        username: user.displayName,
         status: "pending",
         photoUrl: user.photoURL,
         type: "requested",
