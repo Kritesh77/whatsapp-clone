@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import UserContext from "../context/user";
 import ScrollableFeed from "react-scrollable-feed";
@@ -10,9 +10,10 @@ import ChatContainer from "./Chatroom/ChatContainer";
 export default function Chatroom() {
   const { user } = useContext(UserContext);
   const { chatId } = useParams();
+
   return (
     <>
-      {chatId.length ? (
+      {chatId?.length ? (
         <ChatIdContext.Provider value={{ chatId }}>
           <div className=" flex-1 w-2/3 chatroom_container flex-col  h-full  flex relative pb-4 gray">
             <ChatHeader user={user} />
@@ -28,7 +29,7 @@ export default function Chatroom() {
             Add a new chat to start conversing
           </h1>
           <img
-            src={process.env.PUBLIC_URL + "bg.jpg"}
+            src={process.env.PUBLIC_URL + "/bg.jpg"}
             className="h-full w-full object-cover absolute top-0 left-0 z-0"
           />
         </div>

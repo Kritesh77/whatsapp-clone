@@ -15,8 +15,7 @@ function SidebarContacts({ id, name }) {
   const [username, setUsername] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [lastMessage, setLastMessage] = useState("");
-  const [lastSeen, setLastSeen] = useState("");
-  const [messageId, setMessageId] = useState();
+  const [lastMessageDate, setLastMessageDate] = useState("");
   const [isOnline, setIsOnline] = useState(false);
   useEffect(() => {
     getUser(name).then((data) => {
@@ -31,29 +30,21 @@ function SidebarContacts({ id, name }) {
       .collection("chatRooms")
       .doc(id)
       .collection("messages")
-      .where("sender", "==", name)
+      .orderBy("timestamp", "desc")
       .onSnapshot((snap) => {
-        console.log(snap.docs[snap.docs.length - 1]?.data().message);
-      });
-    return () => last();
-  }, []);
-
-  useEffect(() => {
-    const docId = db
-      .collection("users")
-      .where("email", "==", name)
-      .onSnapshot((snap) => {
-        var x = snap.docs[0].data();
-        setIsOnline(x.isOnline);
-        const date = new Date(x.lastSeen?.toDate());
-        const dateToday = new Date().getDate();
-        if (date.getDate() === dateToday) {
-          setLastSeen("Today");
-        } else {
-          setLastSeen(date.getDate() + " / " + date.getMonth());
+        if (!snap.empty) {
+          setLastMessage(snap?.docs[0]?.data()?.message);
+          const date = new Date(snap.docs[0].data().timestamp?.toDate());
+          console.log("DATE", date);
+          const dateToday = new Date().getDate();
+          if (date.getDate() === dateToday) {
+            setLastMessageDate("Today");
+          } else {
+            setLastMessageDate(date.getDate() + " / " + date.getMonth());
+          }
         }
       });
-    return () => docId();
+    return () => last();
   }, []);
 
   return !loading ? (
@@ -71,12 +62,10 @@ function SidebarContacts({ id, name }) {
           <h1 className="font-md inline-block text-lg capitalize text-gray-800">
             {username}
           </h1>
-          <p className="text-gray-600 text-sm font-light">
-            This is my chat message
-          </p>
+          <p className="text-gray-600 text-sm font-light">{lastMessage}</p>
         </div>
         <div className="flex flex-col h-full items-center justify-between">
-          <p className="text-xs text-gray-800">{lastSeen}</p>
+          <p className="text-xs text-gray-800">{lastMessageDate}</p>
           <div className="bg-red-400 rounded-full h-5 w-5 mt-2 self-end flex items-center justify-center">
             <p className="text-white text-xs">4</p>
           </div>

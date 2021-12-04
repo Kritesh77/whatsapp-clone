@@ -1,5 +1,5 @@
 import React, { useState, Suspense, useEffect } from "react";
-import Sidebar from "./components/Sidebar.js";
+import Sidebar from "./components/Sidebar";
 import Chatroom from "./components/Chatroom";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
